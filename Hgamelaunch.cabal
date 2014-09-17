@@ -7,7 +7,7 @@ synopsis:            A lightweight, simple, and functional dgamelaunch clone wri
 -- description:         
 homepage:            https://github.com/C0DEHERO/Hgamelaunch
 license:             MIT
-license-file:        LICENSE
+license-file:        LICENSE.md
 author:              C0DEHERO
 maintainer:          codehero@nerdpol.ch
 -- copyright:           
