@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+
 module Main where
 
 import Hgamelaunch.Banners
@@ -16,6 +17,7 @@ import System.Process
 --import Control.Monad
 import Database.SQLite.Simple
 --import Database.SQLite.Simple.FromRow
+--import Control.Lens
 
 {-
 anonActions = [ ('l', login), ('r', register), ('w', watch), ('s', info), ('m', motd), ('q', quit) ]
@@ -27,28 +29,16 @@ main :: IO ()
 main = do
   conn <- open ":memory:"
   makeDb conn
+  me <- fetchUserFromDb conn "codehero"
   menuLoop conn
+  newme <- fetchUserFromDb conn "codehero"
+  print me
+  print newme
   close conn
 --  menuLoop
 --  menuResult <- anonMenu
 --  nextMenu menuResult
 
-
-{-
-fetchPassFromDb :: Connection -> String -> IO String
-fetchPassFromDb conn username = do
-  user <- fetchUserFromDb conn username :: IO (Maybe UserField)
-  return (getUserPassword user)
-  
--- getUserPassword :: (FromRow r) => [r] -> String
-getUserPassword :: Maybe UserField -> String
-getUserPassword (Just (UserField _ _ password _ _ _)) = unpack password
-getUserPassword Nothing = ""
--}
-
-printUser :: Maybe String -> IO ()
-printUser (Just user) = print user
-printUser Nothing = print ("User doesn't exist" :: String)
 
 menuLoop :: Connection -> IO()
 menuLoop conn = do
@@ -95,13 +85,17 @@ addUser conn = do
   userData <- addUserPrompt
   _ <- attemptRegister conn userData
   return ()
-
 {-
-modUser :: Connection -> IO ()
-modUser conn = do
-  userData <- modUserPrompt
+modUser :: UserField -> IO UserField
+modUser user = do
+  c <- showBanner modUserBanner
+  case c of 'u' -> askPrompt "username"
+            'p' -> askPrompt "password" -- getPasswdPrompt!!!!!
+            'e' -> askPrompt "email"
+            'a' -> askPrompt "admin"
+            'd' -> askPrompt "debugger"
+  return user
 -}
-
 login :: Connection -> IO (Maybe UserField)
 login conn = do
   userData <- loginPrompt
@@ -121,20 +115,20 @@ watchAsUser = return ()
 
 changePassword :: Connection -> UserField -> IO ()
 changePassword conn user = do
-  result <- passwdPrompt
-  updatePassword conn user result
+  result <- passwdPrompt "your new password"
+  updateUser conn (setMaybeUserLens user userPassword result)
 
 changeEmail :: Connection -> UserField -> IO ()
 changeEmail conn user = do
   result <- emailPrompt
-  updateEmail conn user result
+  updateUser conn (setMaybeUserLens user userEmail result)
 
 play :: UserField -> IO ()
 play user = do
   callProcess gamepath (makeArgs user)
   return ()
     where
-      gamepath = "./testingenv/cdda/cataclysm"
+      gamepath = "../testingenv/cdda/cataclysm"
 
 makeArgs :: UserField -> [String]
 makeArgs u@(UserField _ username _ _ _ _) = ["--username", unpack username,
@@ -144,7 +138,7 @@ makeArgs u@(UserField _ username _ _ _ _) = ["--username", unpack username,
                                              "--memorial", memorialpath,
                                              "--shared"] ++ addAdminDebuggerArg u
   where addAdminDebuggerArg user' = addAdminArg user' ++ addDebuggerArg user'
-        rootpath = "./testingenv/"
+        rootpath = "../testingenv/"
         userpath username' = (rootpath ++ "userdata/" ++ unpack username' ++ "/")
         sharepath = (rootpath ++ "share/")
         savepath = (sharepath ++ "save/")

@@ -40,3 +40,11 @@ adminBanner = unlines [ "DgameMonad v0.1"
                       , "b) Ban user"
                       , "u) User menu"
                       , "q) Quit" ]
+
+modUserBanner :: String
+modUserBanner = unlines [ "u) username"
+                        , "p) password"
+                        , "e) email"
+                        , "a) admin"
+                        , "d) debugger"
+                        , "q) quit" ]
