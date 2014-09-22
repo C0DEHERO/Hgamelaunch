@@ -39,7 +39,7 @@ nextMenu conn user = userMenu conn user
 
 anonMenu :: Connection -> IO (Maybe UserField)
 anonMenu conn = do
-  banner <- getBanner "anonBanner.txt"
+  banner <- getBanner "./config/banners/anonBanner.txt"
   c <- showBanner (editBanner banner)
   case c of 'l' -> login conn
             'r' -> register conn
@@ -52,7 +52,7 @@ anonMenu conn = do
 
 userMenu :: Connection -> Maybe UserField -> IO ()
 userMenu conn (Just user) = do
-  banner <- getBanner "userBanner.txt"
+  banner <- getBanner "./config/banners/userBanner.txt"
   games <- getGames
   c <- showBanner (editBanner banner user games)
   case c of 'c' -> changePassword conn user
@@ -67,7 +67,7 @@ userMenu conn _ = menuLoop conn
 
 adminMenu :: Connection -> Maybe UserField -> IO ()
 adminMenu conn (Just user) = do
-  banner <- getBanner "adminBanner.txt"
+  banner <- getBanner "./config/banners/adminBanner.txt"
   c <- showBanner (editBanner user banner)
   case c of 'a' -> addUser conn
             'u' -> userMenu conn (Just user)
@@ -111,13 +111,13 @@ watch _ = return (Just (UserField 1 "codehero" "email" "password" True True))
 
 motd :: Connection -> IO (Maybe UserField)
 motd conn = do
-  banner <- getBanner "motd.txt"
+  banner <- getBanner "./config/banners/motd.txt"
   _ <- showBanner banner
   anonMenu conn
 
 info :: Connection -> IO (Maybe UserField)
 info conn = do
-  banner <- getBanner "serverInfo.txt"
+  banner <- getBanner "./config/bannersserverInfo.txt"
   _ <- showBanner (replaceVersion version banner)
   anonMenu conn
 

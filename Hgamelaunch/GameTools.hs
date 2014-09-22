@@ -35,7 +35,7 @@ instance FromJSON Game where
 
 getGames :: IO [Game]
 getGames = do
-  contents <- B.readFile "games.json"
+  contents <- B.readFile "./config/games.json"
   return (checkGames (decode contents :: Maybe [Game]))
     where checkGames (Just games) = games
           checkGames Nothing = error "Could not read games.json!"
