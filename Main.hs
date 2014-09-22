@@ -44,6 +44,8 @@ anonMenu conn = do
   case c of 'l' -> login conn
             'r' -> register conn
             'w' -> watch conn
+            'm' -> motd conn
+            's' -> info conn
             'q' -> exitWith ExitSuccess
             _   -> anonMenu conn
   where editBanner = replaceVersion version
@@ -106,6 +108,18 @@ register conn = do
 -- PLACEHOLDER
 watch :: Monad m => t -> m (Maybe UserField)
 watch _ = return (Just (UserField 1 "codehero" "email" "password" True True))
+
+motd :: Connection -> IO (Maybe UserField)
+motd conn = do
+  banner <- getBanner "motd.txt"
+  _ <- showBanner banner
+  anonMenu conn
+
+info :: Connection -> IO (Maybe UserField)
+info conn = do
+  banner <- getBanner "serverInfo.txt"
+  _ <- showBanner (replaceVersion version banner)
+  anonMenu conn
 
 watchAsUser :: IO ()
 watchAsUser = return ()
