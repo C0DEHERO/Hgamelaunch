@@ -1,0 +1,7 @@
+DgameMonad v%v
+l) Login
+r) Register new user
+w) Watch games in progress -- does not work yet
+s) Server info             -- this one isn't implented either
+m) MOTD/NEWS               -- this one also doesn't work (tomorrow maybe)
+q) Quit

@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wall #-}
 module Hgamelaunch.Prompts
        ( askPrompt,
          loginPrompt,
@@ -8,10 +9,8 @@ module Hgamelaunch.Prompts
        ) where
 
 import Hgamelaunch.DbTools
-import Hgamelaunch.Banners
 import Data.Char (toUpper)
 import Data.Text (Text, pack)
-import Data.Maybe (isJust)
 import Control.Applicative
 
 askPrompt :: String -> IO (Maybe Text)

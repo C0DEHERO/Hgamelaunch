@@ -1,44 +1,31 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-
 module Main where
 
-import Hgamelaunch.Banners
 import Hgamelaunch.Prompts
+import Hgamelaunch.BannerTools
 import Hgamelaunch.DbTools
 import Hgamelaunch.UserTools
-import Data.Text (unpack)
---import System.Console.ANSI
+import Hgamelaunch.GameTools
 import System.Exit
-import System.Process
-----------------------------
---import Control.Applicative
---import Control.Monad
+import System.Directory
 import Database.SQLite.Simple
---import Database.SQLite.Simple.FromRow
---import Control.Lens
+import Data.Text (Text)
 
-{-
-anonActions = [ ('l', login), ('r', register), ('w', watch), ('s', info), ('m', motd), ('q', quit) ]
-userActions = [ ('c', passwd), ('e', email), ('p', play), ('w', watch), ('q', quit) ]
-adminActions = [ ('a', adduser), ('d', deluser), ('b', banuser), ('q', quit) ]
--}
+version :: Text
+version = "0.1.0.0"
+
+dbPath :: FilePath
+dbPath = "./users.db"
 
 main :: IO ()
 main = do
-  conn <- open ":memory:"
-  makeDb conn
-  me <- fetchUserFromDb conn "codehero"
+  exists <- doesFileExist dbPath
+  conn <- open dbPath
+  makeDb conn exists
   menuLoop conn
-  newme <- fetchUserFromDb conn "codehero"
-  print me
-  print newme
   close conn
---  menuLoop
---  menuResult <- anonMenu
---  nextMenu menuResult
-
 
 menuLoop :: Connection -> IO()
 menuLoop conn = do
@@ -50,34 +37,42 @@ nextMenu conn Nothing = menuLoop conn
 nextMenu conn user@(Just (UserField _ _ _ _ True _)) = adminMenu conn user
 nextMenu conn user = userMenu conn user
 
-
 anonMenu :: Connection -> IO (Maybe UserField)
 anonMenu conn = do
-  c <- showBanner anonBanner
+  banner <- getBanner "anonBanner.txt"
+  c <- showBanner (editBanner banner)
   case c of 'l' -> login conn
             'r' -> register conn
             'w' -> watch conn
             'q' -> exitWith ExitSuccess
             _   -> anonMenu conn
+  where editBanner = replaceVersion version
 
 userMenu :: Connection -> Maybe UserField -> IO ()
 userMenu conn (Just user) = do
-  c <- showBanner userBanner
+  banner <- getBanner "userBanner.txt"
+  games <- getGames
+  c <- showBanner (editBanner banner user games)
   case c of 'c' -> changePassword conn user
             'e' -> changeEmail conn user
-            'p' -> play user
             'w' -> watchAsUser
             'q' -> exitWith ExitSuccess
-            _   -> userMenu conn (Just user)
+            _   -> do
+              launchGame c user games
+              userMenu conn (Just user)
+  where editBanner b (UserField _ n _ _ _ _) g = replaceVersion version . replaceUser n . insertGames b $ showGames g
 userMenu conn _ = menuLoop conn
 
 adminMenu :: Connection -> Maybe UserField -> IO ()
 adminMenu conn (Just user) = do
-  c <- showBanner adminBanner
+  banner <- getBanner "adminBanner.txt"
+  c <- showBanner (editBanner user banner)
   case c of 'a' -> addUser conn
             'u' -> userMenu conn (Just user)
+            'q' -> exitWith ExitSuccess
             _ -> adminMenu conn (Just user)
 --            'm' -> modUser conn
+  where editBanner (UserField _ n _ _ _ _) = replaceVersion version . replaceUser n
 adminMenu conn _ = menuLoop conn
 
 addUser :: Connection -> IO ()
@@ -98,11 +93,13 @@ modUser user = do
 -}
 login :: Connection -> IO (Maybe UserField)
 login conn = do
+  putStrLn "Input empty line to abort"
   userData <- loginPrompt
   attemptLogin conn userData
   
 register :: Connection -> IO (Maybe UserField)
 register conn = do
+  putStrLn "Input empty line to abort"
   userData <- registerPrompt
   registerNormal conn userData
 
@@ -115,39 +112,17 @@ watchAsUser = return ()
 
 changePassword :: Connection -> UserField -> IO ()
 changePassword conn user = do
+  putStrLn "Input empty line to abort"
   result <- passwdPrompt "your new password"
   updateUser conn (setMaybeUserLens user userPassword result)
 
 changeEmail :: Connection -> UserField -> IO ()
 changeEmail conn user = do
+  putStrLn "Input empty line to abort"
   result <- emailPrompt
   updateUser conn (setMaybeUserLens user userEmail result)
 
-play :: UserField -> IO ()
-play user = do
-  callProcess gamepath (makeArgs user)
-  return ()
-    where
-      gamepath = "../testingenv/cdda/cataclysm"
 
-makeArgs :: UserField -> [String]
-makeArgs u@(UserField _ username _ _ _ _) = ["--username", unpack username,
-                                             "--basepath", rootpath,
-                                             "--userdir", userpath username,
-                                             "--savedir", savepath,
-                                             "--memorial", memorialpath,
-                                             "--shared"] ++ addAdminDebuggerArg u
-  where addAdminDebuggerArg user' = addAdminArg user' ++ addDebuggerArg user'
-        rootpath = "../testingenv/"
-        userpath username' = (rootpath ++ "userdata/" ++ unpack username' ++ "/")
-        sharepath = (rootpath ++ "share/")
-        savepath = (sharepath ++ "save/")
-        memorialpath = (sharepath ++ "memorial/")
-
-addAdminArg :: UserField -> [String]
-addAdminArg (UserField _ username _ _ admin _) = if admin then ["--addadmin", unpack username] else []
-addDebuggerArg :: UserField -> [String]
-addDebuggerArg (UserField _ username _ _ _ debugger) = if debugger then ["--adddebugger", unpack username] else []
 
 {-
 TODO:

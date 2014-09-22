@@ -1,0 +1,8 @@
+Hello %u!
+DgameMonad v%v
+c) Change password
+e) Change email address
+p) Play game
+w) Watch games in progress -- does not work yet
+%games
+q) Quit

@@ -1,0 +1,7 @@
+DgameMonad v%v
+a) Add user
+m) Modify user -- does not work yet
+d) Delete user -- doesn't work either
+b) Ban user    -- ...nope
+u) User menu
+q) Quit
