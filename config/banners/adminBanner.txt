@@ -1,4 +1,4 @@
-DgameMonad v%v
+Hgamelaunch v%v
 a) Add user
 m) Modify user -- does not work yet
 d) Delete user -- doesn't work either

@@ -1,5 +1,5 @@
 Hello %u!
-DgameMonad v%v
+Hgamelaunch v%v
 c) Change password
 e) Change email address
 p) Play game
