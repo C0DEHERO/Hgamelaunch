@@ -1,4 +1,5 @@
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
 module Hgamelaunch.UserTools
        ( attemptLogin,
          attemptRegister,
@@ -7,9 +8,12 @@ module Hgamelaunch.UserTools
          ) where
 
 import Hgamelaunch.DbTools
+import Hgamelaunch.GameTools
 import Database.SQLite.Simple(Connection)
-import Data.Text(Text, pack, unpack)
+import Data.Text(Text, pack, unpack, replace)
 import Control.Lens
+import System.Process
+import System.Directory
 
 attemptLogin :: Connection -> Maybe (Text, Text) -> IO (Maybe UserField)
 attemptLogin conn (Just (username, pass)) = do
@@ -19,17 +23,17 @@ attemptLogin conn (Just (username, pass)) = do
     Nothing -> return Nothing
 attemptLogin _ Nothing = return Nothing
 
-
 attemptRegister :: Connection -> Maybe UserField -> IO (Maybe UserField)
 attemptRegister conn (Just user@(UserField _ username _ _ _ _)) = do
   result <- fetchUserFromDb conn username :: IO (Maybe UserField)
   case result of
     Nothing -> do
+      games <- getGames
+      createUserDirs username games
       insertUser conn user
       fetchUserFromDb conn username
     (Just _) -> return Nothing
 attemptRegister _ Nothing = return Nothing
-
 
 registerNormal :: Connection -> Maybe (Text, Text, Text) -> IO (Maybe UserField)
 registerNormal conn (Just (username, pass, email)) = attemptRegister conn (Just (UserField 0 username pass email False False))
@@ -38,3 +42,16 @@ registerNormal _ Nothing = return Nothing
 setMaybeUserLens :: forall t a b.t -> ASetter t t a b -> Maybe b -> t
 setMaybeUserLens u l (Just value) = set l value u
 setMaybeUserLens u _ Nothing = u
+
+createUserDirs :: Text ->  [Game] -> IO()
+createUserDirs username ((Game {..}):games) = do
+  createDirectoryIfMissing True (unpack (replace "%r" rootPath userDir))
+  createDirectoryIfMissing True (substitute inprogressDir)
+  createDirectoryIfMissing True (substitute ttyrecDir)
+  templateExists <- doesFileExist (substitute templateCfg)
+  cpTemplate (substitute templateCfg) (substitute cfgFile) templateExists
+  createUserDirs username games
+    where substitute old = unpack $ replace "%r" rootPath . replace "%u" userDir . replace "%n" username $ old
+          cpTemplate old new True = copyFile old new
+          cpTemplate _ _ False = return ()
+createUserDirs _ [] = return ()

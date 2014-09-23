@@ -1,4 +1,4 @@
-Hello %u!
+Hello %n!
 Hgamelaunch v%v
 c) Change password
 e) Change email address

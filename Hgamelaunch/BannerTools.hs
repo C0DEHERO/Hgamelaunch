@@ -28,7 +28,7 @@ replaceVersion _ [] = []
 
 replaceUser :: T.Text -> [T.Text] -> [T.Text]
 replaceUser username (x:xs) = (replaceVars username x) : replaceUser username xs
-  where replaceVars u = T.replace "%u" u
+  where replaceVars n = T.replace "%n" n
 replaceUser _ [] = []
 
 

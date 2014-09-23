@@ -3,7 +3,14 @@
 module Hgamelaunch.GameTools
        ( getGames,
          showGames,
-         launchGame
+         launchGame,
+         rootPath,
+         userDir,
+         inprogressDir,
+         ttyrecDir,
+         templateCfg,
+         cfgFile,
+         Game(Game)
        ) where
 
 import Hgamelaunch.DbTools
@@ -15,11 +22,16 @@ import qualified Data.ByteString.Lazy as B
 import System.Process
 
 data Game = Game
-      { choicechar :: Text
+      { choiceCh :: Text
       , shortName :: Text
       , gameName :: Text
       , rootPath :: Text
       , gamePath :: Text
+      , userDir :: Text
+      , inprogressDir :: Text
+      , ttyrecDir :: Text
+      , templateCfg :: Text
+      , cfgFile :: Text
       , gameArgs :: [Text]
       } deriving Show
 
@@ -30,6 +42,11 @@ instance FromJSON Game where
                          v .: "gamename" <*>
                          v .: "rootpath" <*>
                          v .: "gamepath" <*>
+                         v .: "userdir" <*>
+                         v .: "inprogress" <*>
+                         v .: "ttyrecdir" <*>
+                         v .: "templatecfg" <*>
+                         v .: "cfgfile" <*>
                          v .: "gameargs"
   parseJSON _           = mzero
 
@@ -41,21 +58,23 @@ getGames = do
           checkGames Nothing = error "Could not read games.json!"
 
 showGames :: [Game] -> [Text]
-showGames ((Game choice name _ _ _ _):xs) = (choice `append` ") " `append` name) : showGames xs
+showGames ((Game {choiceCh = choice, shortName = name}):xs) = (choice `append` ") " `append` name) : showGames xs
 showGames [] = []
 
 launchGame :: Char -> UserField -> [Game] -> IO ()
-launchGame c user (game@(Game choice _ _ rootpath gamepath _):xs)
+launchGame c user (game@(Game choice _ _ rootpath gamepath userdir _ _ _ _ _):xs)
   | (cons c "") == choice = do
       callProcess (unpack (replace "%r" rootpath gamepath)) (makeArgs user game)
   | otherwise = launchGame c user xs
-        where makeArgs u@(UserField _ username _ _ _ _) (Game _ _ _ _ _ args) = replaceInArgs args rootpath username ++ addPrivs u
+        where makeArgs u@(UserField _ username _ _ _ _) (Game {gameArgs = args}) = replaceInArgs args rootpath userdir username ++
+                                                                                   addPrivs u
 launchGame _ _ _ = return ()
 
-replaceInArgs :: [Text] -> Text -> Text -> [String]
-replaceInArgs (x:xs) rootpath username = (unpack (replaceVars rootpath username x)) : replaceInArgs xs rootpath username
-                                       where replaceVars r u = replace "%r" r . replace "%u" u
-replaceInArgs [] _ _ = []
+replaceInArgs :: [Text] -> Text -> Text -> Text -> [String]
+replaceInArgs (x:xs) rootpath userdir username =
+  unpack (replaceVars rootpath userdir username x) : replaceInArgs xs rootpath userdir username
+  where replaceVars r u n = replace "%r" r . replace "%u" u . replace "%n" n
+replaceInArgs [] _ _ _ = []
 
 
 addPrivs :: UserField -> [String]
