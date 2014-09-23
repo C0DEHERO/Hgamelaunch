@@ -3,19 +3,17 @@
         "choice"    : "p",
         "shortname" : "CDDA",
         "gamename"  : "Cataclysm: Dark Days Ahead",
-        "rootpath"  : "../testingenv/",
+        "rootpath"  : "!rootpath",
         "gamepath"  : "%r/cdda/cataclysm",
         "gameargs"  : [ "--username", "%u",
                         "--basepath", "%r",
-                        "--userdir", "%ruserdata/%u/",
-                        "--savedir", "%r/share/save/",
-                        "--memorial", "%r/share/memorial/" ]
+                        "--userdir", "%ruserdata/%u/" ]
     },
     {
         "choice"    : "s",
         "shortname" : "CDDA SHARED",
-        "gamename"  : "Cataclysm: Dark Days Ahead",
-        "rootpath"  : "../testingenv/",
+        "gamename"  : "Cataclysm: Dark Days Ahead (Shared)",
+        "rootpath"  : "!rootpath",
         "gamepath"  : "%r/cdda/cataclysm",
         "gameargs"  : [ "--username", "%u",
                         "--basepath", "%r",
