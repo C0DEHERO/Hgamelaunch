@@ -72,8 +72,9 @@ launchGame _ _ _ = return ()
 
 replaceInArgs :: [Text] -> Text -> Text -> Text -> [String]
 replaceInArgs (x:xs) rootpath userdir username =
-  unpack (replaceVars rootpath userdir username x) : replaceInArgs xs rootpath userdir username
-  where replaceVars r u n = replace "%r" r . replace "%u" u . replace "%n" n
+  unpack (replaceVars  x) : replaceInArgs xs rootpath userdir username
+  where replaceVars = replace "%r" rootpath . replace "%u" (replaceInUserdir userdir) . replace "%n" username
+        replaceInUserdir = replace "%r" rootpath . replace "%n" username
 replaceInArgs [] _ _ _ = []
 
 
