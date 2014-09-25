@@ -2,19 +2,47 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Hgamelaunch.UserTools
-       ( attemptLogin,
+       ( login,
+         register,
+         modify,
+         modifyYn,
+         attemptLogin,
          attemptRegister,
-         registerNormal,
-         setMaybeUserLens
+         registerRegular,
+         changePassword,
+         changeEmail
          ) where
 
 import Hgamelaunch.DbTools
 import Hgamelaunch.GameTools
+import Hgamelaunch.Prompts
 import Database.SQLite.Simple(Connection)
 import Data.Text(Text, pack, unpack, replace)
 import Control.Lens
 import System.Process
 import System.Directory
+
+login :: Connection -> IO (Maybe UserField)
+login conn = do
+  putStrLn "Input empty line to abort"
+  userData <- loginPrompt
+  attemptLogin conn userData
+  
+register :: Connection -> IO (Maybe UserField)
+register conn = do
+  putStrLn "Input empty line to abort"
+  userData <- registerPrompt
+  registerRegular conn userData
+
+modify conn user lens question = do
+  result <- askPrompt question
+  case result of
+   (Just value) -> updateUser conn (set lens value user)
+   Nothing -> return ()
+
+modifyYn conn user lens question = do
+  result <- ynPrompt question
+  updateUser conn (set lens result user)
 
 attemptLogin :: Connection -> Maybe (Text, Text) -> IO (Maybe UserField)
 attemptLogin conn (Just (username, pass)) = do
@@ -36,9 +64,21 @@ attemptRegister conn (Just user@(UserField _ username _ _ _ _)) = do
     (Just _) -> return Nothing
 attemptRegister _ Nothing = return Nothing
 
-registerNormal :: Connection -> Maybe (Text, Text, Text) -> IO (Maybe UserField)
-registerNormal conn (Just (username, pass, email)) = attemptRegister conn (Just (UserField 0 username pass email False False))
-registerNormal _ Nothing = return Nothing
+registerRegular :: Connection -> Maybe (Text, Text, Text) -> IO (Maybe UserField)
+registerRegular conn (Just (username, pass, email)) = attemptRegister conn (Just (UserField 0 username pass email False False))
+registerRegular _ Nothing = return Nothing
+
+changePassword :: Connection -> UserField -> IO ()
+changePassword conn user = do
+  putStrLn "Input empty line to abort"
+  result <- passwdPrompt "your new password"
+  updateUser conn (setMaybeUserLens user userPassword result)
+
+changeEmail :: Connection -> UserField -> IO ()
+changeEmail conn user = do
+  putStrLn "Input empty line to abort"
+  result <- emailPrompt
+  updateUser conn (setMaybeUserLens user userEmail result)
 
 setMaybeUserLens :: forall t a b.t -> ASetter t t a b -> Maybe b -> t
 setMaybeUserLens u l (Just value) = set l value u

@@ -59,9 +59,8 @@ userMenu conn (Just user) = do
             'e' -> changeEmail conn user
             'w' -> watchAsUser
             'q' -> exitWith ExitSuccess
-            _   -> do
-              launchGame c user games
-              userMenu conn (Just user)
+            _   -> launchGame c user games
+  userMenu conn (Just user)
   where editBanner b (UserField _ n _ _ _ _) g = replaceVersion version . replaceUser n . insertGames b $ showGames g
 userMenu conn _ = menuLoop conn
 
@@ -71,9 +70,10 @@ adminMenu conn (Just user) = do
   c <- showBanner (editBanner user banner)
   case c of 'a' -> addUser conn
             'u' -> userMenu conn (Just user)
+            'm' -> modUser conn
             'q' -> exitWith ExitSuccess
             _ -> adminMenu conn (Just user)
---            'm' -> modUser conn
+  adminMenu conn (Just user)
   where editBanner (UserField _ n _ _ _ _) = replaceVersion version . replaceUser n
 adminMenu conn _ = menuLoop conn
 
@@ -82,28 +82,27 @@ addUser conn = do
   userData <- addUserPrompt
   _ <- attemptRegister conn userData
   return ()
-{-
-modUser :: UserField -> IO UserField
-modUser user = do
-  c <- showBanner modUserBanner
-  case c of 'u' -> askPrompt "username"
-            'p' -> askPrompt "password" -- getPasswdPrompt!!!!!
-            'e' -> askPrompt "email"
-            'a' -> askPrompt "admin"
-            'd' -> askPrompt "debugger"
-  return user
--}
-login :: Connection -> IO (Maybe UserField)
-login conn = do
-  putStrLn "Input empty line to abort"
-  userData <- loginPrompt
-  attemptLogin conn userData
-  
-register :: Connection -> IO (Maybe UserField)
-register conn = do
-  putStrLn "Input empty line to abort"
-  userData <- registerPrompt
-  registerNormal conn userData
+
+modUser :: Connection -> IO ()
+modUser conn = do
+  username <- askPrompt "Input the username of the user you want to modify"
+  u <- case username of
+    (Just username') -> fetchUserFromDb conn username'
+    Nothing -> return Nothing
+
+  user <- case u of
+    (Just user') -> return user'
+    Nothing -> error "User doesn't exist"
+
+  banner <- getBanner "./config/banners/modUserBanner.txt"
+  c <- showBanner (editBanner banner user)
+  case c of 'u' -> modify conn user userUsername "username?"
+            'p' -> modify conn user userPassword "password?"
+            'e' -> modify conn user userEmail "email?"
+            'a' -> modifyYn conn user userAdmin "admin?"
+            'd' -> modifyYn conn user userDebugger "debug?"
+            _ -> return ()
+  where editBanner b (UserField _ n _ _ _ _) = replaceVersion version . replaceUser n $ b
 
 -- PLACEHOLDER
 watch :: Monad m => t -> m (Maybe UserField)
@@ -117,29 +116,18 @@ motd conn = do
 
 info :: Connection -> IO (Maybe UserField)
 info conn = do
-  banner <- getBanner "./config/bannersserverInfo.txt"
+  banner <- getBanner "./config/banners/serverInfo.txt"
   _ <- showBanner (replaceVersion version banner)
   anonMenu conn
 
 watchAsUser :: IO ()
 watchAsUser = return ()
 
-changePassword :: Connection -> UserField -> IO ()
-changePassword conn user = do
-  putStrLn "Input empty line to abort"
-  result <- passwdPrompt "your new password"
-  updateUser conn (setMaybeUserLens user userPassword result)
-
-changeEmail :: Connection -> UserField -> IO ()
-changeEmail conn user = do
-  putStrLn "Input empty line to abort"
-  result <- emailPrompt
-  updateUser conn (setMaybeUserLens user userEmail result)
-
 
 
 {-
 TODO:
+- add mod(ify)User menu for admin
 - template sharing/syncing
 - selective game sharing (use symlinks for those)
 -- store names of saves and with whom they are shared in extra table

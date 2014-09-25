@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
 module Hgamelaunch.Prompts
        ( askPrompt,
+         ynPrompt,
          loginPrompt,
          registerPrompt,
          passwdPrompt,
