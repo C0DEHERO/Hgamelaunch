@@ -46,13 +46,13 @@ setMaybeUserLens u _ Nothing = u
 
 createUserDirs :: Text ->  [Game] -> IO()
 createUserDirs username ((Game {..}):games) = do
-  createDirectoryIfMissing True (unpack (replace "%r" rootPath userDir))
+  createDirectoryIfMissing True (substitute userDir)
   createDirectoryIfMissing True (substitute inprogressDir)
   createDirectoryIfMissing True (substitute ttyrecDir)
   templateExists <- doesFileExist (substitute templateCfg)
   cpTemplate (substitute templateCfg) (substitute cfgFile) templateExists
   createUserDirs username games
-    where substitute old = unpack $ replace "%r" rootPath . replace "%u" userDir . replace "%n" username $ old
+    where substitute old = unpack $ replace "%n" username . replace "%r" rootPath . replace "%u" userDir $ old
           cpTemplate old new True = copyFile old new
           cpTemplate _ _ False = return ()
 createUserDirs _ [] = return ()
