@@ -1,7 +1,6 @@
 Hgamelaunch v%v
 a) Add user
-m) Modify user -- does not work yet
-d) Delete user -- doesn't work either
-b) Ban user    -- ...nope
+m) Modify user
+d) Delete user -- doesn't work yet
 u) User menu
 q) Quit
