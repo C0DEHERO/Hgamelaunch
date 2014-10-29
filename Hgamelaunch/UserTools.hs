@@ -21,6 +21,8 @@ import Data.Text(Text, pack, unpack, replace)
 import Control.Lens
 import System.Process
 import System.Directory
+import Filesystem.Path
+import Filesystem.Path.CurrentOS
 
 login :: Connection -> IO (Maybe UserField)
 login conn = do
@@ -89,7 +91,7 @@ createUserDirs username ((Game {..}):games) = do
   createDirectoryIfMissing True (substitute userDir)
   createDirectoryIfMissing True (substitute inprogressDir)
   createDirectoryIfMissing True (substitute ttyrecDir)
-  createDirectoryIfMissing True (substitute $ parent cfgFile)
+  createDirectoryIfMissing True (encodeString $ parent $ decodeString $ substitute cfgFile)
   templateExists <- doesFileExist (substitute templateCfg)
   cpTemplate (substitute templateCfg) (substitute cfgFile) templateExists
   createUserDirs username games
