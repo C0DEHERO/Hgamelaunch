@@ -89,8 +89,7 @@ createUserDirs username ((Game {..}):games) = do
   createDirectoryIfMissing True (substitute userDir)
   createDirectoryIfMissing True (substitute inprogressDir)
   createDirectoryIfMissing True (substitute ttyrecDir)
-  createDirectoryIfMissing True (substitute cfgFile)
-  removeDirectory (substitute cfgFile)                -- dirty hack but it works
+  createDirectoryIfMissing True (substitute $ parent cfgFile)
   templateExists <- doesFileExist (substitute templateCfg)
   cpTemplate (substitute templateCfg) (substitute cfgFile) templateExists
   createUserDirs username games
