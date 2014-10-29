@@ -51,7 +51,7 @@ registerPrompt = do
 passwdPrompt :: String -> IO (Maybe Text) 
 passwdPrompt str = do
   pass <- askPrompt str
-  pass2 <- askPrompt (str ++ "again")
+  pass2 <- askPrompt (str ++ " again")
   return (checkPass pass pass2)
     where checkPass pass pass2
             | pass == pass2 = pass
