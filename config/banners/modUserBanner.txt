@@ -1,0 +1,7 @@
+Hgamelaunch v%v
+Modifying user: %n
+u) Change username
+p) Change password
+e) Change email
+a) Change admin privs
+d) Change debug privs
