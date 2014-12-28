@@ -106,7 +106,7 @@ modUser conn = do
 
 -- PLACEHOLDER
 watch :: Monad m => t -> m (Maybe UserField)
-watch _ = return (Just (UserField 1 "codehero" "email" "password" True True))
+watch _ = return Nothing
 
 motd :: Connection -> IO (Maybe UserField)
 motd conn = do
